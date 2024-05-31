@@ -8,6 +8,7 @@
 
 ## Usage
 Just download an executable from Releases and launch it!
+![instr](https://github.com/xxanqw/winrar-installer/assets/70416831/cab47ef6-901e-425d-b4e3-19098ff0747e)
 
 ## Building
 1. Create `.venv` and enter it with  
