@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QCheckBox
 from PyQt6.QtGui import QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
-from logic import PathChooser, Downloader, InstallerThread, get_versions
+from logic import PathChooser, Downloader, InstallerThread, get_versions, launch_winrar
 from .about import AboutWindow
 from os import path as p
 import tempfile
@@ -61,6 +61,9 @@ class MainWindow(QMainWindow):
         self.archdropdown.addItem("x64")
         self.archdropdown.addItem("x32")
         self.chooser_layout.addWidget(self.archdropdown)
+        self.launch_checkbox = QCheckBox("Launch after installation")
+        self.launch_checkbox.setChecked(True)
+        self.chooser_layout.addWidget(self.launch_checkbox)
 
         self.install_layout = QVBoxLayout()
         self.install_layout.addLayout(self.chooser_layout)
@@ -139,6 +142,10 @@ class MainWindow(QMainWindow):
             f.write(response.content)
 
         print("rarreg.key downloaded successfully.")
+        if self.launch_checkbox.isChecked():
+            print("Launching WinRar...")
+            launch_winrar(self.archdropdown.currentText())
+            
         self.reenable()
 
     def reenable(self):
