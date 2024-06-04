@@ -9,8 +9,8 @@ window_location = p.dirname(p.abspath(__file__))
 class AboutWindow(QDialog):
     def __init__(self):
         super().__init__()
-        version = "1.0.0"
-        build = "25"
+        version = "1.0.1"
+        build = "27"
         self.setWindowTitle("About")
         self.setFixedSize(300, 300)
         self.setWindowIcon(QIcon(window_location + "/xxanqw.jpg"))
