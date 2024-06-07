@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QCheckBox
 from PyQt6.QtGui import QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
-from logic import PathChooser, Downloader, InstallerThread, get_versions, launch_winrar
+from logic import Downloader, InstallerThread, get_versions, launch_winrar
 from .about import AboutWindow
 from os import path as p
 import tempfile
@@ -80,12 +80,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.central_widget.setLayout(self.layout)
         self.show()
-
-    def choose_path(self):
-        path = PathChooser()
-        selected_path = path.choose_path()
-        self.path_input.setText(selected_path)
-        print("Selected Path:", selected_path)
 
     def open_about_window(self):
         about_window = AboutWindow()
