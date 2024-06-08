@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QCheckBox
 from PyQt6.QtGui import QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
-from logic import Downloader, InstallerThread, get_versions, launch_winrar
+from logic import Downloader, InstallerThread, get_versions, launch_winrar, get_languages, get_lastmod
 from .about import AboutWindow
 from os import path as p
 import tempfile
@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.toolbar.setMovable(False)
 
         self.open_action = QAction("About", self)
-
+        self.open_action.setShortcut("Ctrl+I")
         self.toolbar.addAction(self.open_action)
 
         self.open_action.triggered.connect(self.open_about_window)
@@ -45,12 +45,15 @@ class MainWindow(QMainWindow):
         self.chooser_label = QLabel("Language:")
         self.chooser_layout.addWidget(self.chooser_label)
         self.langdropdown = QComboBox()
-        self.langdropdown.addItem("English")
-        self.langdropdown.addItem("Ukrainian")
+        self.langdropdown.setFixedWidth(120)
+        languages = get_languages()
+        for language in languages:
+            self.langdropdown.addItem(language)
         self.chooser_layout.addWidget(self.langdropdown)
         self.verchooser_label = QLabel("Version:")
         self.chooser_layout.addWidget(self.verchooser_label)
         self.verdropdown = QComboBox()
+        self.verdropdown.setFixedWidth(55)
         versions = get_versions()
         for version in versions:
             self.verdropdown.addItem(version)
@@ -64,6 +67,8 @@ class MainWindow(QMainWindow):
         self.launch_checkbox = QCheckBox("Launch after installation")
         self.launch_checkbox.setChecked(True)
         self.chooser_layout.addWidget(self.launch_checkbox)
+
+        self.lastmod = get_lastmod()
 
         self.install_layout = QVBoxLayout()
         self.install_layout.addLayout(self.chooser_layout)
@@ -82,7 +87,7 @@ class MainWindow(QMainWindow):
         self.show()
 
     def open_about_window(self):
-        about_window = AboutWindow()
+        about_window = AboutWindow(self, self.lastmod)
         about_window.exec()
 
     def install(self):
@@ -138,7 +143,7 @@ class MainWindow(QMainWindow):
         print("rarreg.key downloaded successfully.")
         if self.launch_checkbox.isChecked():
             print("Launching WinRar...")
-            launch_winrar(self.archdropdown.currentText())
+            launch_winrar(self.arch)
             
         self.reenable()
 
