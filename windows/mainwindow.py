@@ -3,10 +3,11 @@ from PyQt6.QtGui import QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
 from logic import Downloader, InstallerThread, get_versions, launch_winrar, get_languages, get_lastmod
 from .about import AboutWindow
-from os import path as p
+from os import path as p, remove
 import tempfile
-import requests
+import shutil
 from PyQt6.QtWidgets import QMessageBox
+from webbrowser import open
 
 window_location = p.dirname(p.abspath(__file__))
 
@@ -15,21 +16,25 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("WinRar Installer")
         self.setFixedSize(600, 400)
-        self.setWindowIcon(QIcon(window_location + "/xxanqw.jpg"))
+        self.setWindowIcon(QIcon(window_location + "/rarcat.png"))
 
         self.toolbar = self.addToolBar("Toolbar")
         self.toolbar.setMovable(False)
 
-        self.open_action = QAction("About", self)
-        self.open_action.setShortcut("Ctrl+I")
-        self.toolbar.addAction(self.open_action)
+        self.about_action = QAction("About", self)
+        self.about_action.setShortcut("Ctrl+I")
+        self.toolbar.addAction(self.about_action)
+        self.github_action = QAction("GitHub", self)
+        self.github_action.setShortcut("Ctrl+G")
+        self.toolbar.addAction(self.github_action)
 
-        self.open_action.triggered.connect(self.open_about_window)
+        self.about_action.triggered.connect(self.open_about_window)
+        self.github_action.triggered.connect(lambda: open("https://github.com/xxanqw/winrar-installer"))
 
         self.title_layout = QVBoxLayout()
         self.title_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         self.image = QLabel()
-        self.image.setPixmap(QPixmap(window_location + "/xxanqw.jpg"))
+        self.image.setPixmap(QPixmap(window_location + "/rarcat-100x100.png"))
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_layout.addWidget(self.image)
         self.title = QLabel("Welcome to WinRar Installer")
@@ -53,7 +58,7 @@ class MainWindow(QMainWindow):
         self.verchooser_label = QLabel("Version:")
         self.chooser_layout.addWidget(self.verchooser_label)
         self.verdropdown = QComboBox()
-        self.verdropdown.setFixedWidth(55)
+        self.verdropdown.setFixedWidth(58)
         versions = get_versions()
         for version in versions:
             self.verdropdown.addItem(version)
@@ -71,8 +76,11 @@ class MainWindow(QMainWindow):
         self.lastmod = get_lastmod()
 
         self.install_layout = QVBoxLayout()
+        self.install_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.install_layout.addLayout(self.chooser_layout)
         self.install_button = QPushButton("Install")
+        self.install_button.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.install_button.setFixedHeight(40)
         self.install_button.clicked.connect(self.install)
         self.install_layout.addWidget(self.install_button)
 
@@ -95,16 +103,59 @@ class MainWindow(QMainWindow):
         self.langdropdown.setDisabled(True)
         self.verdropdown.setDisabled(True)
         self.archdropdown.setDisabled(True)
+        self.launch_checkbox.setDisabled(True)
+        self.install_button.setText("Installing...")
 
         self.temp = tempfile.gettempdir()
         version = self.verdropdown.currentText()
         self.arch = self.archdropdown.currentText()
         self.lang = self.langdropdown.currentText()
         self.ver = version.replace(".", "")
-        if self.lang == "English":
-            self.lang = ""
-        elif self.lang == "Ukrainian":
-            self.lang = "uk"
+        self.lang_dict = {
+            "Arabic": "ar",
+            "Armenian": "am",
+            "Azerbaijani": "az",
+            "Bulgarian": "bg",
+            "Catalan": "ca",
+            "Chinese Simplified": "sc",
+            "Chinese Traditional": "tc",
+            "Croatian": "cro",
+            "Czech": "cz",
+            "Danish": "dk",
+            "Dutch": "nl",
+            "English": "",
+            "Euskera": "eu",
+            "Finnish": "fi",
+            "French": "fr",
+            "Galician": "gl",
+            "German": "d",
+            "Greek": "el",
+            "Hebrew": "he",
+            "Hungarian": "hu",
+            "Indonesian": "id",
+            "Italian": "it",
+            "Japanese": "jp",
+            "Korean": "kr",
+            "Lithuanian": "lt",
+            "Mongolian": "mn",
+            "Norwegian": "no",
+            "Polish": "pl",
+            "Portuguese": "pt",
+            "Portuguese Brazilian": "br",
+            "Romanian": "ro",
+            "Russian": "ru",
+            "Serbian Cyrillic": "srbcyr",
+            "Slovak": "sk",
+            "Slovenian": "slv",
+            "Spanish": "es",
+            "Swedish": "sw",
+            "Thai": "th",
+            "Turkish": "tr",
+            "Ukrainian": "uk",
+            "Vietnamese": "vn"
+            }
+
+        self.lang = self.lang_dict[self.langdropdown.currentText()]       
         url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
         downpath = f"{self.temp}\\winrar-{self.arch}-{self.ver}{self.lang}.exe"
         self.downloader = Downloader(url, downpath)
@@ -125,26 +176,32 @@ class MainWindow(QMainWindow):
 
 
     def install_the_last_one(self):
-        key_url = "https://fs.xserv.pp.ua/files/rarreg.key"
+        self.downloader = Downloader("https://fs.xserv.pp.ua/files/rarreg.key", f"{self.temp}\\rarreg.key")
+        self.downloader.start()
+        self.downloader.finished.connect(self.install_key)
+        
+    def install_key(self):
         if self.arch == "x64":
-            key_path = "C:/Program Files/WinRar/rarreg.key"
+            winrar_install_path = "C:\\Program Files\\WinRAR"  # Шлях до папки інсталяції WinRar
         elif self.arch == "x32":
-            key_path = "C:/Program Files (x86)/WinRar/rarreg.key"
-
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        }
-
-        response = requests.get(key_url, headers=headers)
-
-        with open(key_path, 'wb') as f:
-            f.write(response.content)
-
-        print("rarreg.key downloaded successfully.")
+            winrar_install_path = "C:\\Program Files (x86)\\WinRAR"
+            if not p.exists(winrar_install_path):
+                winrar_install_path = "C:\\Program Files\\WinRAR"
+        key_path = f"{self.temp}\\rarreg.key"
+        key_path_winrar = f"{winrar_install_path}\\rarreg.key"
+        
+        if p.exists(winrar_install_path):
+            if p.exists(key_path_winrar):
+                remove(key_path_winrar)
+            shutil.move(key_path, winrar_install_path)
+            print(f"rarreg.key moved to {winrar_install_path} successfully.")
+        else:
+            print("WinRar installation folder not found.")
+        
         if self.launch_checkbox.isChecked():
             print("Launching WinRar...")
             launch_winrar(self.arch)
-            
+
         self.reenable()
 
     def reenable(self):
@@ -152,10 +209,12 @@ class MainWindow(QMainWindow):
         self.langdropdown.setDisabled(False)
         self.verdropdown.setDisabled(False)
         self.archdropdown.setDisabled(False)
+        self.launch_checkbox.setDisabled(False)
+        self.install_button.setText("Install")
         print("Installation completed!")
         info_message = QMessageBox()
         info_message.setIcon(QMessageBox.Icon.Information)
         info_message.setWindowTitle("Installation Completed")
         info_message.setText("WinRar installation completed successfully!")
-        info_message.setWindowIcon(QIcon(window_location + "/xxanqw.jpg"))
+        info_message.setWindowIcon(QIcon(window_location + "/rarcat.png"))
         info_message.exec()

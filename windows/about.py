@@ -10,14 +10,15 @@ class AboutWindow(QDialog):
     def __init__(self, parent, lastmod):
         super().__init__()
         version = "1.0.3"
-        build = "32"
+        build = "37"
         self.setWindowTitle("About")
         self.setFixedSize(300, 150)
-        self.setWindowIcon(QIcon(window_location + "/xxanqw.jpg"))
+        self.setWindowIcon(QIcon(window_location + "/rarcat.png"))
+        self.parent = parent
 
         app_name_layout = QVBoxLayout()
         app_img = QLabel()
-        app_img.setPixmap(QPixmap(window_location + "/xxanqw.jpg"))
+        app_img.setPixmap(QPixmap(window_location + "/rarcat-100x100.png"))
         app_img.setAlignment(Qt.AlignmentFlag.AlignCenter)
         app_name_layout.addWidget(app_img)
         app_name = QLabel("WinRar Installer")
