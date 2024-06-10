@@ -1,4 +1,4 @@
-# Extra simple WinRar Installer
+![# Extra simple WinRar Installer](https://cdn.xserv.pp.ua/images/github/winrar-installer/winrar.png)
 > [!NOTE]  
 > rarreg.key was obtained from open sources in the Internet
 
@@ -7,8 +7,10 @@
 > Also in current state u need manualy config explorer integration (for some reason) and if you know how to launch WinRar post-setup (first launch) screen create an issue with it or integrate in code with pull request, thx!
 
 ## Usage
-Just download an executable from Releases and launch it!
-![instr](https://github.com/xxanqw/winrar-installer/assets/70416831/cab47ef6-901e-425d-b4e3-19098ff0747e)
+Just download an executable from Releases and launch it!  
+
+![Showcase GIF](https://cdn.xserv.pp.ua/images/github/winrar-installer/winrar.gif)
+<p style="text-align: center;">tested on VM</p>
 
 ## Building
 1. Create `.venv` and enter it with  
