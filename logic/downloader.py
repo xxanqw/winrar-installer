@@ -8,9 +8,6 @@ class Downloader(QThread):
         self.save_path = save_path
 
     def run(self):
-        # Implement your download logic here
-        # For example, you can use the requests library to download the file
-
         response = requests.get(self.url)
         if response.status_code == 200:
             with open(self.save_path, 'wb') as file:
