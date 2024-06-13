@@ -10,6 +10,7 @@ import platform
 if platform.system() == 'Windows':
     print("Welcome to WinRar Installer")
     app = QApplication([])
+    app.setStyle("Fusion")
     window = MainWindow()
     app.exec()
 else:
