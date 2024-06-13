@@ -155,8 +155,13 @@ class MainWindow(QMainWindow):
             "Vietnamese": "vn"
             }
 
-        self.lang = self.lang_dict[self.langdropdown.currentText()]       
-        url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
+        self.lang = self.lang_dict[self.langdropdown.currentText()]
+        if self.lang == "" or self.lang == "uk" or self.lang == "ru" or self.lang == "sc" or self.lang == "cz" or self.lang == "nl" or self.lang == "fi"  or self.lang == "fr" or self.lang == "d" or self.lang == "it" or self.lang == "jp" or self.lang == "pl" or self.lang == "br" or self.lang == "es" or self.lang == "tr":
+            print("Using stupid winrar link for this language.")
+            url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
+        else:
+            print("Using normal winrar link for this language.")
+            url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar-{self.arch}-{self.ver}{self.lang}.exe"
         downpath = f"{self.temp}\\winrar-{self.arch}-{self.ver}{self.lang}.exe"
         self.downloader = Downloader(url, downpath)
         self.downloader.start()

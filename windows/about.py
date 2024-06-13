@@ -9,8 +9,8 @@ window_location = p.dirname(p.abspath(__file__))
 class AboutWindow(QDialog):
     def __init__(self, parent, lastmod):
         super().__init__()
-        version = "1.0.3"
-        build = "37"
+        version = "1.0.4"
+        build = "40"
         self.setWindowTitle("About")
         self.setFixedSize(300, 150)
         self.setWindowIcon(QIcon(window_location + "/rarcat.png"))
