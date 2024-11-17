@@ -1,6 +1,4 @@
-import sys
-from PyQt6.QtCore import QThread
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtCore import QThread
 from subprocess import run
 import subprocess
 from os import path as p

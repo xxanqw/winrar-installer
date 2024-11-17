@@ -1,12 +1,12 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QCheckBox
-from PyQt6.QtGui import QPixmap, QAction, QIcon
-from PyQt6.QtCore import Qt
-from logic import Downloader, InstallerThread, get_versions, launch_winrar, get_languages, get_lastmod
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QCheckBox, QFormLayout, QHBoxLayout
+from PySide6.QtGui import QPixmap, QAction, QIcon
+from PySide6.QtCore import Qt
+from logic import Downloader, InstallerThread, get_versions, launch_winrar, get_languages, get_lastmod, get_lang_dict
 from .about import AboutWindow
 from os import path as p, remove
 import tempfile
 import shutil
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox
 from webbrowser import open
 
 window_location = p.dirname(p.abspath(__file__))
@@ -14,9 +14,7 @@ window_location = p.dirname(p.abspath(__file__))
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("WinRar Installer")
-        self.setFixedSize(600, 400)
-        self.setWindowIcon(QIcon(window_location + "/rarcat.png"))
+        self.setFixedSize(450, 400)
 
         self.toolbar = self.addToolBar("Toolbar")
         self.toolbar.setMovable(False)
@@ -31,53 +29,59 @@ class MainWindow(QMainWindow):
         self.about_action.triggered.connect(self.open_about_window)
         self.github_action.triggered.connect(lambda: open("https://github.com/xxanqw/winrar-installer"))
 
+        self.another_title_layout = QHBoxLayout()
         self.title_layout = QVBoxLayout()
-        self.title_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.title_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignLeft)
+        self.title_layout.setSpacing(10)
+        self.another_title_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image = QLabel()
         self.image.setPixmap(QPixmap(window_location + "/rarcat-100x100.png"))
-        self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title_layout.addWidget(self.image)
+        self.image.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignRight)
+        self.another_title_layout.addWidget(self.image)
         self.title = QLabel("Welcome to WinRar Installer")
-        self.title.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.title.setStyleSheet("font-size: 16px; font-weight: bold;")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         self.description = QLabel("This is a simple installer for WinRar.\nAlready with activation key.")
         self.description.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         self.title_layout.addWidget(self.title)
         self.title_layout.addWidget(self.description)
+        self.another_title_layout.addLayout(self.title_layout)
 
+        self.options_layout = QFormLayout()
+        self.options_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-        self.chooser_layout = QHBoxLayout()
-        self.chooser_label = QLabel("Language:")
-        self.chooser_layout.addWidget(self.chooser_label)
         self.langdropdown = QComboBox()
         self.langdropdown.setFixedWidth(120)
         languages = get_languages()
         for language in languages:
             self.langdropdown.addItem(language)
-        self.chooser_layout.addWidget(self.langdropdown)
-        self.verchooser_label = QLabel("Version:")
-        self.chooser_layout.addWidget(self.verchooser_label)
+        self.options_layout.addRow("Language:", self.langdropdown)
+
         self.verdropdown = QComboBox()
-        self.verdropdown.setFixedWidth(58)
+        self.verdropdown.setFixedWidth(120)
         versions = get_versions()
         for version in versions:
             self.verdropdown.addItem(version)
-        self.chooser_layout.addWidget(self.verdropdown)
-        self.arch_choose_label = QLabel("Architecture:")
-        self.chooser_layout.addWidget(self.arch_choose_label)
+        self.options_layout.addRow("Version:", self.verdropdown)
+
         self.archdropdown = QComboBox()
         self.archdropdown.addItem("x64")
         self.archdropdown.addItem("x32")
-        self.chooser_layout.addWidget(self.archdropdown)
+        self.options_layout.addRow("Architecture:", self.archdropdown)
+
+        self.show_betas_checkbox = QCheckBox("Show Betas")
+        self.show_betas_checkbox.stateChanged.connect(self.show_betas)
+        self.options_layout.addRow(self.show_betas_checkbox)
+
         self.launch_checkbox = QCheckBox("Launch after installation")
         self.launch_checkbox.setChecked(True)
-        self.chooser_layout.addWidget(self.launch_checkbox)
+        self.options_layout.addRow(self.launch_checkbox)
 
         self.lastmod = get_lastmod()
 
         self.install_layout = QVBoxLayout()
         self.install_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.install_layout.addLayout(self.chooser_layout)
+        self.install_layout.addLayout(self.options_layout)
         self.install_button = QPushButton("Install")
         self.install_button.setStyleSheet("font-size: 16px; font-weight: bold;")
         self.install_button.setFixedHeight(40)
@@ -85,9 +89,10 @@ class MainWindow(QMainWindow):
         self.install_layout.addWidget(self.install_button)
 
         self.layout = QVBoxLayout()
-        self.layout.addLayout(self.title_layout)
+        self.layout.addLayout(self.another_title_layout)
         self.layout.addLayout(self.install_layout)
 
+        self.beta = False
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -111,57 +116,19 @@ class MainWindow(QMainWindow):
         self.arch = self.archdropdown.currentText()
         self.lang = self.langdropdown.currentText()
         self.ver = version.replace(".", "")
-        self.lang_dict = {
-            "Arabic": "ar",
-            "Armenian": "am",
-            "Azerbaijani": "az",
-            "Bulgarian": "bg",
-            "Catalan": "ca",
-            "Chinese Simplified": "sc",
-            "Chinese Traditional": "tc",
-            "Croatian": "cro",
-            "Czech": "cz",
-            "Danish": "dk",
-            "Dutch": "nl",
-            "English": "",
-            "Euskera": "eu",
-            "Finnish": "fi",
-            "French": "fr",
-            "Galician": "gl",
-            "German": "d",
-            "Greek": "el",
-            "Hebrew": "he",
-            "Hungarian": "hu",
-            "Indonesian": "id",
-            "Italian": "it",
-            "Japanese": "jp",
-            "Korean": "kr",
-            "Lithuanian": "lt",
-            "Mongolian": "mn",
-            "Norwegian": "no",
-            "Polish": "pl",
-            "Portuguese": "pt",
-            "Portuguese Brazilian": "br",
-            "Romanian": "ro",
-            "Russian": "ru",
-            "Serbian Cyrillic": "srbcyr",
-            "Slovak": "sk",
-            "Slovenian": "slv",
-            "Spanish": "es",
-            "Swedish": "sw",
-            "Thai": "th",
-            "Turkish": "tr",
-            "Ukrainian": "uk",
-            "Vietnamese": "vn"
-            }
-
+        self.lang_dict = get_lang_dict()
         self.lang = self.lang_dict[self.langdropdown.currentText()]
-        if self.lang == "" or self.lang == "uk" or self.lang == "ru" or self.lang == "sc" or self.lang == "cz" or self.lang == "nl" or self.lang == "fi"  or self.lang == "fr" or self.lang == "d" or self.lang == "it" or self.lang == "jp" or self.lang == "pl" or self.lang == "br" or self.lang == "es" or self.lang == "tr":
-            print("Using stupid winrar link for this language.")
-            url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
-        else:
-            print("Using normal winrar link for this language.")
+
+        if self.beta:
+            print("Using beta winrar link.")
             url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar-{self.arch}-{self.ver}{self.lang}.exe"
+        else:
+            if self.lang == "" or self.lang == "uk" or self.lang == "ru" or self.lang == "sc" or self.lang == "cz" or self.lang == "nl" or self.lang == "fi"  or self.lang == "fr" or self.lang == "d" or self.lang == "it" or self.lang == "jp" or self.lang == "pl" or self.lang == "br" or self.lang == "es" or self.lang == "tr":
+                print("Using stupid winrar link for this language.")
+                url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
+            else:
+                print("Using normal winrar link for this language.")
+                url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar-{self.arch}-{self.ver}{self.lang}.exe"
         downpath = f"{self.temp}\\winrar-{self.arch}-{self.ver}{self.lang}.exe"
         self.downloader = Downloader(url, downpath)
         self.downloader.start()
@@ -209,6 +176,26 @@ class MainWindow(QMainWindow):
 
         self.reenable()
 
+    def show_betas(self):
+        if self.show_betas_checkbox.isChecked():
+            self.verdropdown.clear()
+            versions = get_versions(True)
+            for version in versions:
+                self.verdropdown.addItem(version)
+            self.langdropdown.clear()
+            self.langdropdown.addItem("English")
+            self.beta = True
+        else:
+            self.verdropdown.clear()
+            versions = get_versions()
+            for version in versions:
+                self.verdropdown.addItem(version)
+            self.langdropdown.clear()
+            languages = get_languages()
+            for language in languages:
+                self.langdropdown.addItem(language)
+            self.beta = False
+
     def reenable(self):
         self.install_button.setDisabled(False)
         self.langdropdown.setDisabled(False)
@@ -221,5 +208,4 @@ class MainWindow(QMainWindow):
         info_message.setIcon(QMessageBox.Icon.Information)
         info_message.setWindowTitle("Installation Completed")
         info_message.setText("WinRar installation completed successfully!")
-        info_message.setWindowIcon(QIcon(window_location + "/rarcat.png"))
         info_message.exec()

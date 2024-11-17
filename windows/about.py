@@ -1,7 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout
-from PyQt6.QtGui import QPixmap, QIcon
-from PyQt6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout
+from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtCore import Qt
 from os import path as p
 
 window_location = p.dirname(p.abspath(__file__))
@@ -9,8 +9,8 @@ window_location = p.dirname(p.abspath(__file__))
 class AboutWindow(QDialog):
     def __init__(self, parent, lastmod):
         super().__init__()
-        version = "1.0.4"
-        build = "40"
+        version = "1.1.0"
+        build = "41"
         self.setWindowTitle("About")
         self.setFixedSize(300, 150)
         self.setWindowIcon(QIcon(window_location + "/rarcat.png"))
@@ -27,7 +27,7 @@ class AboutWindow(QDialog):
         app_name_layout.addWidget(app_name)
 
         description_layout = QVBoxLayout()
-        description = QLabel("Made by xxanqw in 2024\nWritten on Python with PyQt6")
+        description = QLabel("Made by xxanqw in 2024\nWritten on Python with PySide6")
         description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         description_layout.addWidget(description)
         version = QLabel(f"Version {version} (build {build})\nJSON from {lastmod}\n\n{sys.platform}")
