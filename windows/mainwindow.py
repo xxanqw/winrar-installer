@@ -109,6 +109,7 @@ class MainWindow(QMainWindow):
         self.verdropdown.setDisabled(True)
         self.archdropdown.setDisabled(True)
         self.launch_checkbox.setDisabled(True)
+        self.show_betas_checkbox.setDisabled(True)
         self.install_button.setText("Installing...")
 
         self.temp = tempfile.gettempdir()
@@ -202,6 +203,7 @@ class MainWindow(QMainWindow):
         self.verdropdown.setDisabled(False)
         self.archdropdown.setDisabled(False)
         self.launch_checkbox.setDisabled(False)
+        self.show_betas_checkbox.setDisabled(False)
         self.install_button.setText("Install")
         print("Installation completed!")
         info_message = QMessageBox()
