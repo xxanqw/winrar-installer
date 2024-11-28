@@ -12,6 +12,6 @@ class Downloader(QThread):
         if response.status_code == 200:
             with open(self.save_path, 'wb') as file:
                 file.write(response.content)
-                print("Download completed!")
+                print("| Download completed!")
         else:
-            print("Failed to download file.")
+            print("| Failed to download file.")

@@ -10,7 +10,7 @@ class InstallerThread(QThread):
 
     def run(self):
         run([self.path_to_winrar_installer, '/S'], shell=True, check=True)
-        print("Installation completed!")
+        print("| Installation completed!")
 
 def launch_winrar(arch):
     if arch == "x32":

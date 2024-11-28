@@ -15,6 +15,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setFixedSize(450, 400)
+        self.lang_dict = get_lang_dict()
 
         self.toolbar = self.addToolBar("Toolbar")
         self.toolbar.setMovable(False)
@@ -55,12 +56,13 @@ class MainWindow(QMainWindow):
         languages = get_languages()
         for language in languages:
             self.langdropdown.addItem(language)
+        self.langdropdown.currentIndexChanged.connect(self.version_change)
         self.options_layout.addRow("Language:", self.langdropdown)
 
         self.verdropdown = QComboBox()
         self.verdropdown.setFixedWidth(120)
-        versions = get_versions()
-        for version in versions:
+        self.versions = get_versions()
+        for version in self.versions:
             self.verdropdown.addItem(version)
         self.options_layout.addRow("Version:", self.verdropdown)
 
@@ -93,6 +95,7 @@ class MainWindow(QMainWindow):
         self.layout.addLayout(self.install_layout)
 
         self.beta = False
+        self.specific_lang = False
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -115,30 +118,36 @@ class MainWindow(QMainWindow):
         self.temp = tempfile.gettempdir()
         version = self.verdropdown.currentText()
         self.arch = self.archdropdown.currentText()
-        self.lang = self.langdropdown.currentText()
+        self.language = self.langdropdown.currentText()
         self.ver = version.replace(".", "")
-        self.lang_dict = get_lang_dict()
+        
         self.lang = self.lang_dict[self.langdropdown.currentText()]
 
         if self.beta:
-            print("Using beta winrar link.")
-            url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar-{self.arch}-{self.ver}{self.lang}.exe"
+            print("=============================\n| Using beta link. (rarlab.com)")
+            url = f"https://www.rarlab.com/rar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
         else:
-            if self.lang == "" or self.lang == "uk" or self.lang == "ru" or self.lang == "sc" or self.lang == "cz" or self.lang == "nl" or self.lang == "fi"  or self.lang == "fr" or self.lang == "d" or self.lang == "it" or self.lang == "jp" or self.lang == "pl" or self.lang == "br" or self.lang == "es" or self.lang == "tr":
-                print("Using stupid winrar link for this language.")
-                url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
-            else:
-                print("Using normal winrar link for this language.")
-                url = f"https://www.win-rar.com/fileadmin/winrar-versions/winrar-{self.arch}-{self.ver}{self.lang}.exe"
+            print("(rarlab.com)")
+            url = f"https://www.rarlab.com/rar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
         downpath = f"{self.temp}\\winrar-{self.arch}-{self.ver}{self.lang}.exe"
         self.downloader = Downloader(url, downpath)
         self.downloader.start()
-        print("Downloading WinRar...")
-        print("Version:", version)
-        print("Architecture:", self.arch)
-        print("Language:", self.lang)
-        print("URL:", url)
-        print("Temp:", self.temp)
+        lines = [
+            ("Downloading WinRar...", ""),
+            ("Version:", version),
+            ("Architecture:", self.arch),
+            ("Language:", self.language),
+            ("URL:", url),
+            ("Temp:", self.temp),
+        ]
+
+        line_contents = [f"| {label} {value}" for label, value in lines]
+        max_length = max(len(line) for line in line_contents)
+
+        for line in line_contents:
+            padding = max_length - len(line)
+            print(f"{line}{' ' * padding} |")
+            
         self.downloader.finished.connect(self.install_part_two)
 
     def install_part_two(self):
@@ -167,25 +176,32 @@ class MainWindow(QMainWindow):
             if p.exists(key_path_winrar):
                 remove(key_path_winrar)
             shutil.move(key_path, winrar_install_path)
-            print(f"rarreg.key moved to {winrar_install_path} successfully.")
+            print(f"| rarreg.key moved to {winrar_install_path} successfully.")
         else:
-            print("WinRar installation folder not found.")
+            print("| WinRar installation folder not found.")
         
         if self.launch_checkbox.isChecked():
-            print("Launching WinRar...")
+            print("| Launching WinRar...")
             launch_winrar(self.arch)
 
         self.reenable()
 
     def show_betas(self):
         if self.show_betas_checkbox.isChecked():
+            self.beta = True
             self.verdropdown.clear()
             versions = get_versions(True)
             for version in versions:
                 self.verdropdown.addItem(version)
             self.langdropdown.clear()
             self.langdropdown.addItem("English")
-            self.beta = True
+            self.langdropdown.addItem("Russian")
+            self.langdropdown.addItem("Chinese Traditional")
+            self.langdropdown.addItem("German")
+            self.langdropdown.addItem("Indonesian")
+            self.langdropdown.addItem("Portuguese")
+            self.langdropdown.addItem("Portuguese Brazilian")
+            self.langdropdown.addItem("Swedish")
         else:
             self.verdropdown.clear()
             versions = get_versions()
@@ -197,6 +213,21 @@ class MainWindow(QMainWindow):
                 self.langdropdown.addItem(language)
             self.beta = False
 
+    def version_change(self):
+        if not self.beta:
+            lang = self.lang_dict[self.langdropdown.currentText()]
+            if lang == 'az' or self.lang == 'he' or self.lang == 'srbcyr':
+                self.verdropdown.clear()
+                vers = self.versions[2:]
+                for version in vers:
+                    self.verdropdown.addItem(version)
+                self.specific_lang = True
+            elif self.specific_lang:
+                self.verdropdown.clear()
+                for version in self.versions:
+                    self.verdropdown.addItem(version)
+                self.specific_lang = False
+
     def reenable(self):
         self.install_button.setDisabled(False)
         self.langdropdown.setDisabled(False)
@@ -205,7 +236,7 @@ class MainWindow(QMainWindow):
         self.launch_checkbox.setDisabled(False)
         self.show_betas_checkbox.setDisabled(False)
         self.install_button.setText("Install")
-        print("Installation completed!")
+        print("| Installation completed!\n=============================")
         info_message = QMessageBox()
         info_message.setIcon(QMessageBox.Icon.Information)
         info_message.setWindowTitle("Installation Completed")
