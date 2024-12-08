@@ -19,6 +19,6 @@ Just download an executable from Releases and launch it!
     ./.venv/Scripts/Activate.ps1
     ```
 2. Install requirements from `req` with `pip install -r req`
-3. Launch `build.py` with `python build.py`.  
-Also you can build app with console enabled (debug mode) with `python build.py -v`
+3. Launch `build.py` with `python build.py -p`.  
+Also you can build app with console enabled (debug mode) with `python build.py -pc`
 4. Built `.exe` will appear in `build` folder
