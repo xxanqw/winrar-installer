@@ -1,24 +1,44 @@
 ![# Extra simple WinRar Installer](https://cdn.xserv.pp.ua/images/github/winrar-installer/winrar.png)
-> [!NOTE]  
-> rarreg.key was obtained from open sources in the Internet
 
-> [!IMPORTANT]  
-> App is requires an Internet connection!  
-> Also in current state u need manualy config explorer integration (for some reason) and if you know how to launch WinRar post-setup (first launch) screen create an issue with it or integrate in code with pull request, thx!
+<div align="center">
+    
+## Installation
 
-## Usage
-Just download an executable from Releases and launch it!  
+</div>
 
-![Showcase GIF](https://cdn.xserv.pp.ua/images/github/winrar-installer/winrar.gif)
-<p style="text-align: center;">tested on VM</p>
+### PowerShell
+Execute this in your PowerShell terminal and you good to go
+```bash
+irm https://shorty.pp.ua/winrar | iex
+```
+### Traditional
+Go to the latest release and download .exe yourself  
+Or press on this [blue](https://github.com/xxanqw/winrar-installer/releases/latest/download/winrar-installer.exe) text to download latest
+
+<div align="center">
+    
+## Showcase
+
+![Showcase](https://github.com/user-attachments/assets/05352e90-1aff-4015-858c-aea48bb7c76f)
+
+</div>
+
+<div align="center">
 
 ## Building
-1. Create `.venv` and enter it with  
-    ```
-    python -m venv .venv
-    ./.venv/Scripts/Activate.ps1
-    ```
-2. Install requirements from `req` with `pip install -r req`
-3. Launch `build.py` with `python build.py -p`.  
-Also you can build app with console enabled (debug mode) with `python build.py -pc`
-4. Built `.exe` will appear in `build` folder
+
+</div>
+
+If you're on PowerShell just copy code below
+```bash
+# Clone repo
+git clone https://github.com/xxanqw/winrar-installer.git
+cd winrar-installer
+# Create virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+# Install requirements and build
+pip install -r req
+python build.py -p
+```
+Also make sure that Python and git is installed on your system
