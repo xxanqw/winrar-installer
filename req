@@ -1,5 +1,5 @@
 PySide6
 elevate
-nuitka
+pyinstaller
 requests
 imageio
