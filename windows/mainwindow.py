@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QCheckBox, QFormLayout, QHBoxLayout
-from PySide6.QtGui import QPixmap, QAction, QIcon
+from PySide6.QtGui import QPixmap, QAction
 from PySide6.QtCore import Qt
 from logic import Downloader, InstallerThread, get_versions, launch_winrar, get_languages, get_lastmod, get_lang_dict
 from .about import AboutWindow
@@ -8,6 +8,7 @@ import tempfile
 import shutil
 from PySide6.QtWidgets import QMessageBox
 from webbrowser import open
+from typing import Literal
 
 window_location = p.dirname(p.abspath(__file__))
 
@@ -66,11 +67,6 @@ class MainWindow(QMainWindow):
             self.verdropdown.addItem(version)
         self.options_layout.addRow("Version:", self.verdropdown)
 
-        self.archdropdown = QComboBox()
-        self.archdropdown.addItem("x64")
-        self.archdropdown.addItem("x32")
-        self.options_layout.addRow("Architecture:", self.archdropdown)
-
         self.show_betas_checkbox = QCheckBox("Show Betas")
         self.show_betas_checkbox.stateChanged.connect(self.show_betas)
         self.options_layout.addRow(self.show_betas_checkbox)
@@ -110,80 +106,97 @@ class MainWindow(QMainWindow):
         self.install_button.setDisabled(True)
         self.langdropdown.setDisabled(True)
         self.verdropdown.setDisabled(True)
-        self.archdropdown.setDisabled(True)
         self.launch_checkbox.setDisabled(True)
         self.show_betas_checkbox.setDisabled(True)
         self.install_button.setText("Installing...")
 
         self.temp = tempfile.gettempdir()
         version = self.verdropdown.currentText()
-        self.arch = self.archdropdown.currentText()
         self.language = self.langdropdown.currentText()
         self.ver = version.replace(".", "")
         
         self.lang = self.lang_dict[self.langdropdown.currentText()]
+        try:
+            if self.beta:
+                print("| Using beta link. (rarlab.com)")
+                url = f"https://www.rarlab.com/rar/winrar-x64-{self.ver}{self.lang}.exe"
+            else:
+                print("(rarlab.com)")
+                url = f"https://www.rarlab.com/rar/winrar-x64-{self.ver}{self.lang}.exe"
+            self.downpath = f"{self.temp}\\winrar-x64-{self.ver}{self.lang}.exe"
+            self.downloader = Downloader(url, self.downpath)
+            self.downloader.start()
+            lines = [
+                ("Downloading WinRar...", ""),
+                ("Version:", version),
+                ("Language:", self.language),
+                ("URL:", url),
+                ("Temp:", self.temp),
+            ]
 
-        if self.beta:
-            print("=============================\n| Using beta link. (rarlab.com)")
-            url = f"https://www.rarlab.com/rar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
-        else:
-            print("(rarlab.com)")
-            url = f"https://www.rarlab.com/rar/winrar-{self.arch}-{self.ver}{self.lang}.exe"
-        downpath = f"{self.temp}\\winrar-{self.arch}-{self.ver}{self.lang}.exe"
-        self.downloader = Downloader(url, downpath)
-        self.downloader.start()
-        lines = [
-            ("Downloading WinRar...", ""),
-            ("Version:", version),
-            ("Architecture:", self.arch),
-            ("Language:", self.language),
-            ("URL:", url),
-            ("Temp:", self.temp),
-        ]
+            line_contents = [f"| {label} {value}" for label, value in lines]
 
-        line_contents = [f"| {label} {value}" for label, value in lines]
-        max_length = max(len(line) for line in line_contents)
-
-        for line in line_contents:
-            padding = max_length - len(line)
-            print(f"{line}{' ' * padding} |")
+            for line in line_contents:
+                print(f"{line}{' '}")
+        except Exception as e:
+            self.message("Error", f"An error occurred: {e}", "error")
+            self.reenable()
+            return
             
         self.downloader.finished.connect(self.install_part_two)
 
     def install_part_two(self):
-        path = f"{self.temp}\\winrar-{self.arch}-{self.ver}{self.lang}.exe"
-        self.installer = InstallerThread(path)
-        self.installer.start()
+        path = f"{self.temp}\\winrar-x64-{self.ver}{self.lang}.exe"
+        try:
+            self.installer = InstallerThread(path)
+            self.installer.start()
+        except Exception as e:
+            self.message("Error", f"An error occurred: {e}", "error")
+            self.reenable()
+            return
         self.installer.finished.connect(self.install_the_last_one)
 
 
     def install_the_last_one(self):
-        self.downloader = Downloader("https://fs.xserv.pp.ua/files/rarreg.key", f"{self.temp}\\rarreg.key")
-        self.downloader.start()
+        try:
+            self.downloader = Downloader("https://fs.xserv.pp.ua/files/rarreg.key", f"{self.temp}\\rarreg.key")
+            self.downloader.start()
+        except Exception as e:
+            self.message("Error", f"An error occurred: {e}", "error")
+            self.reenable()
+            return
         self.downloader.finished.connect(self.install_key)
         
     def install_key(self):
-        if self.arch == "x64":
-            winrar_install_path = "C:\\Program Files\\WinRAR"  # Шлях до папки інсталяції WinRar
-        elif self.arch == "x32":
-            winrar_install_path = "C:\\Program Files (x86)\\WinRAR"
-            if not p.exists(winrar_install_path):
-                winrar_install_path = "C:\\Program Files\\WinRAR"
+        winrar_install_path = "C:\\Program Files\\WinRAR"  # Шлях до папки інсталяції WinRar
         key_path = f"{self.temp}\\rarreg.key"
         key_path_winrar = f"{winrar_install_path}\\rarreg.key"
         
-        if p.exists(winrar_install_path):
-            if p.exists(key_path_winrar):
-                remove(key_path_winrar)
-            shutil.move(key_path, winrar_install_path)
-            print(f"| rarreg.key moved to {winrar_install_path} successfully.")
-        else:
-            print("| WinRar installation folder not found.")
+        try:
+            if p.exists(winrar_install_path):
+                if p.exists(key_path_winrar):
+                    remove(key_path_winrar)
+                shutil.move(key_path, winrar_install_path)
+                print(f"| rarreg.key moved to {winrar_install_path} successfully.")
+            else:
+                print("| WinRar installation folder not found.")
+        except Exception as e:
+            self.message("Error", f"An error occurred: {e}", "error")
+            self.reenable()
+            return
         
         if self.launch_checkbox.isChecked():
             print("| Launching WinRar...")
-            launch_winrar(self.arch)
-
+            launch_winrar()
+            
+        self.cleanup()
+        
+    def cleanup(self):
+        try:
+            remove(self.downpath)
+        except FileNotFoundError:
+            pass
+        
         self.reenable()
 
     def show_betas(self):
@@ -228,17 +241,24 @@ class MainWindow(QMainWindow):
                     self.verdropdown.addItem(version)
                 self.specific_lang = False
 
+    def message(self, title, text, type: Literal['info', 'warning', 'error']):
+        message = QMessageBox()
+        if type == "info":
+            message.setIcon(QMessageBox.Icon.Information)
+        elif type == "warning":
+            message.setIcon(QMessageBox.Icon.Warning)
+        elif type == "error":
+            message.setIcon(QMessageBox.Icon.Critical)
+        message.setWindowTitle(title)
+        message.setText(text)
+        message.exec()
+
     def reenable(self):
         self.install_button.setDisabled(False)
         self.langdropdown.setDisabled(False)
         self.verdropdown.setDisabled(False)
-        self.archdropdown.setDisabled(False)
         self.launch_checkbox.setDisabled(False)
         self.show_betas_checkbox.setDisabled(False)
         self.install_button.setText("Install")
-        print("| Installation completed!\n=============================")
-        info_message = QMessageBox()
-        info_message.setIcon(QMessageBox.Icon.Information)
-        info_message.setWindowTitle("Installation Completed")
-        info_message.setText("WinRar installation completed successfully!")
-        info_message.exec()
+        print("| Installation completed!")
+        self.message("Installation completed", "WinRar has been installed successfully.", "info")
