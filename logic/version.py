@@ -1,6 +1,6 @@
 import requests
 
-APP_VERSION = "0.1.1.1"
+APP_VERSION = "0.1.1.2"
 
 url = "https://fs.xserv.pp.ua/files/winrar.json"
 response = requests.get(url)
