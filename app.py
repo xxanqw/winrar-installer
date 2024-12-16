@@ -4,6 +4,7 @@ from windows import MainWindow
 from logic import APP_VERSION
 import platform
 import os.path as p
+import sys
 
 """ 
 Uncomment the following lines to run the application with elevated privileges
@@ -17,6 +18,12 @@ version = APP_VERSION
 version = version.lstrip('0.')
 
 if platform.system() == 'Windows':
+    arch, _ = platform.architecture()
+    if arch != '64bit':
+        error_message = "This application supports only 64-bit Windows."
+        QMessageBox.critical(None, "Error", error_message)
+        sys.exit(1)
+    
     window_location = p.dirname(p.abspath(__file__))
     print("Welcome to WinRar Installer")
     app = QApplication([])
@@ -31,3 +38,4 @@ if platform.system() == 'Windows':
 else:
     error_message = "This application is only supported on Windows."
     QMessageBox.critical(None, "Error", error_message)
+    sys.exit(1)

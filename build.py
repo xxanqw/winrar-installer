@@ -1,6 +1,7 @@
 import os
 import argparse
 from logic import APP_VERSION
+import sys
 
 version_sliced = APP_VERSION.split(".")
 # Build Configuration
@@ -73,31 +74,63 @@ def create_admin_manifest():
         f.write(manifest)
     return "admin.manifest"
 
-def build_with_pyinstaller(console=False):
+def sign_exe(exe_path, pfx_path, password):
+    """Sign the executable using a PFX certificate"""
+    cmd = (
+        f'signtool sign /f "{pfx_path}" /p "{password}" '
+        f'/tr http://timestamp.digicert.com /td sha256 /fd sha256 "{exe_path}"'
+    )
+    result = os.system(cmd)
+    if result != 0:
+        print("Error: Signing the executable failed")
+        return False
+    return True
+
+def build_with_pyinstaller(console=False, sign=False):
     """Build the application using PyInstaller"""
     version_file = create_version_file()
     manifest_file = create_admin_manifest()
-    cmd = (f'pyinstaller --onefile {"--console" if console else "--noconsole"} '
-           f'--icon=windows/rarcat.png '
-           f'--add-data "windows/rarcat.png;windows" '
-           f'--add-data "windows/rarcat-100x100.png;windows" '
-           f'--version-file={version_file} '
-           f'--manifest={manifest_file} '
-           f'--uac-admin '
-           f'--name winrar-installer{'-debug' if console else ''} '
-           f'app.py')
+    cmd = (
+        f'pyinstaller --onefile {"--console" if console else "--noconsole"} '
+        f'--icon=windows/rarcat.png '
+        f'--add-data "windows/rarcat.png;windows" '
+        f'--add-data "windows/rarcat-100x100.png;windows" '
+        f'--version-file={version_file} '
+        f'--manifest={manifest_file} '
+        f'--uac-admin '
+        f'--name winrar-installer{"-debug" if console else ""} '
+        f'app.py'
+    )
     os.system(cmd)
+    
+    if sign:
+      exe_path = os.path.join('dist', f'winrar-installer{"-debug" if console else ""}.exe')
+      pfx_path = 'certificate.pfx'
+      password = ''
+      if sign_exe(exe_path, pfx_path, password):
+          print("Executable signed successfully.")
+      else:
+          print("Failed to sign the executable.")
 
 def main():
     parser = argparse.ArgumentParser(description='Build WinRAR Installer')
     parser.add_argument('-p', '--pyinstaller', action='store_true', help='Build with PyInstaller')
     parser.add_argument('-c', '--console', action='store_true', help='Enable console')
+    parser.add_argument('-s', '--sign', action='store_true', help='Sign the executable')
     args = parser.parse_args()
 
+    if not any(vars(args).values()):
+        parser.print_help()
+        sys.exit(1)
+
     if args.pyinstaller:
-        print(f"Building with PyInstaller ({'with' if args.console else 'no'} console)")
-        build_with_pyinstaller(console=args.console)
+        print(f"Building with PyInstaller ({'with' if args.console else 'no'} console{' and signing' if args.sign else ''})")
+        build_with_pyinstaller(console=args.console, sign=args.sign)
         cleanup(console=args.console)
+    else:
+        print("No valid build option selected.")
+        parser.print_help()
+        sys.exit(1)
 
 def cleanup(console):
     os.remove("version_info.txt")
@@ -106,4 +139,3 @@ def cleanup(console):
 
 if __name__ == "__main__":
     main()
-    print("Build complete!!!!!!!!!💕😘❤️❤️❤️")
