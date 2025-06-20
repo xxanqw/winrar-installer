@@ -90,27 +90,64 @@ def build_with_pyinstaller(console=False, sign=False):
     """Build the application using PyInstaller"""
     version_file = create_version_file()
     manifest_file = create_admin_manifest()
-    cmd = (
-        f'pyinstaller --onefile {"--console" if console else "--noconsole"} '
+    
+    # Build GUI version (no console) using app_gui.py
+    gui_cmd = (
+        f'pyinstaller --onefile --noconsole '
         f'--icon=windows/rarcat.png '
         f'--add-data "windows/rarcat.png;windows" '
         f'--add-data "windows/rarcat-100x100.png;windows" '
         f'--version-file={version_file} '
         f'--manifest={manifest_file} '
         f'--uac-admin '
-        f'--name winrar-installer{"-debug" if console else ""} '
-        f'app.py'
+        f'--name winrar-installer '
+        f'app_gui.py'
     )
-    os.system(cmd)
+    
+    # Build CLI version (with console) using app_cli.py
+    cli_cmd = (
+        f'pyinstaller --onefile --console '
+        f'--icon=windows/rarcat.png '
+        f'--add-data "windows/rarcat.png;windows" '
+        f'--add-data "windows/rarcat-100x100.png;windows" '
+        f'--version-file={version_file} '
+        f'--manifest={manifest_file} '
+        f'--uac-admin '
+        f'--name winrar-installer-cli '
+        f'app_cli.py'
+    )
+    
+    print("Building GUI version (no console)...")
+    os.system(gui_cmd)
+    
+    print("Building CLI version (with console)...")
+    os.system(cli_cmd)
     
     if sign:
-      exe_path = os.path.join('dist', f'winrar-installer{"-debug" if console else ""}.exe')
-      pfx_path = 'certificate.pfx'
-      password = ''
-      if sign_exe(exe_path, pfx_path, password):
-          print("Executable signed successfully.")
-      else:
-          print("Failed to sign the executable.")
+        gui_exe = os.path.join('dist', 'winrar-installer.exe')
+        cli_exe = os.path.join('dist', 'winrar-installer-cli.exe')
+        pfx_path = 'certificate.pfx'
+        password = ''
+        
+        print("Signing GUI executable...")
+        if sign_exe(gui_exe, pfx_path, password):
+            print("GUI executable signed successfully.")
+        else:
+            print("Failed to sign GUI executable.")
+            
+        print("Signing CLI executable...")
+        if sign_exe(cli_exe, pfx_path, password):
+            print("CLI executable signed successfully.")
+        else:
+            print("Failed to sign CLI executable.")
+    
+    print("\nBuild completed!")
+    print("Generated files:")
+    print("  - winrar-installer.exe (GUI version, no console)")
+    print("  - winrar-installer-cli.exe (CLI version, with console)")
+    print("\nUsage:")
+    print("  - GUI: winrar-installer.exe")
+    print("  - CLI: winrar-installer-cli.exe --install --version 7.11")
 
 def main():
     parser = argparse.ArgumentParser(description='Build WinRAR Installer')
@@ -132,10 +169,22 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-def cleanup(console):
-    os.remove("version_info.txt")
-    os.remove("admin.manifest")
-    os.remove(f"winrar-installer{'-debug' if console else ''}.spec")
+def cleanup(console=False):
+    """Clean up temporary build files"""
+    files_to_remove = [
+        "version_info.txt",
+        "admin.manifest",
+        "winrar-installer.spec",
+        "winrar-installer-cli.spec"
+    ]
+    
+    for file in files_to_remove:
+        try:
+            if os.path.exists(file):
+                os.remove(file)
+                print(f"Removed {file}")
+        except Exception as e:
+            print(f"Could not remove {file}: {e}")
 
 if __name__ == "__main__":
     main()

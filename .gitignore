@@ -3,3 +3,10 @@ build/
 .venv/
 dist/
 certificate.pfx
+
+test_results_*.json
+test_config.py
+test.py
+
+# refer to https://fs.xserv.pp.ua/files/winrar.json
+winrar.json
