@@ -103,7 +103,7 @@ winrar-installer-cli.exe --install --beta --version 7.12b1 --no-launch
 
 ## 🛠️ Building from Source
 
-> **Note**  
+> [!NOTE]  
 > Requires **Python 3.9+** (project set up for 3.13.3 by default).  
 > [UV](https://docs.astral.sh/uv/getting-started/installation/) is needed for dependency management and running scripts.
 
