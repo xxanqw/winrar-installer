@@ -44,7 +44,7 @@ iex "& {$(irm https://shorty.pp.ua/winrar)} -Help"
 |-----------|-------------|---------|
 | `-Install` | Install WinRAR | `-Install` |
 | `-Version` | Specify version | `-Version '7.11'` |
-| `-Language` | Specify language (default: English) | `-Language 'Russian'` |
+| `-Language` | Specify language (default: English) | `-Language 'Ukrainian'` |
 | `-Beta` | Use beta versions | `-Beta` |
 | `-NoLaunch` | Don't launch after install | `-NoLaunch` |
 | `-ListVersions` | Show available versions | `-ListVersions` |
