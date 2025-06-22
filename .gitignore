@@ -8,5 +8,5 @@ test_results_*.json
 test_config.py
 test.py
 
-# refer to https://fs.xserv.pp.ua/files/winrar.json
+# refer to https://fs.xserv.pp.ua/winrar/config.json
 winrar.json
