@@ -1,0 +1,3 @@
+[submodule "wrcfg"]
+	path = wrcfg
+	url = https://github.com/xxanqw/wrcfg.git
