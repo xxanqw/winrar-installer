@@ -110,7 +110,7 @@ winrar-installer-cli.exe --install --beta --version 7.12b1 --no-launch
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/xxanqw/winrar-installer.git
+git clone --recurse-submodules https://github.com/xxanqw/winrar-installer.git
 cd winrar-installer
 ```
 
