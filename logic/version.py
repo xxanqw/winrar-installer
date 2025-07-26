@@ -2,7 +2,7 @@ import requests
 from typing import Optional, Dict, List
 import time
 
-APP_VERSION = "0.1.1.3"
+APP_VERSION = "0.1.1.4"
 
 
 class VersionManager:
@@ -12,7 +12,7 @@ class VersionManager:
         self._cache_time = 0
         self._cache_duration = 300
 
-    def _fetch_data(self) -> Optional[Dict]:
+    def _fetch_data(self) -> Dict:
         current_time = time.time()
         if self._cache and (current_time - self._cache_time) < self._cache_duration:
             return self._cache
@@ -22,10 +22,12 @@ class VersionManager:
                 self._cache = response.json()
                 self._cache_time = current_time
                 return self._cache
+            else:
+                raise RuntimeError(
+                    f"Failed to fetch config: HTTP {response.status_code}"
+                )
         except requests.RequestException as e:
-            print(f"Error fetching version data: {e}")
-            return self._cache
-        return None
+            raise RuntimeError(f"Error fetching version data: {e}")
 
     def _extract_version_number(self, version_obj) -> str:
         if isinstance(version_obj, dict):
@@ -34,56 +36,57 @@ class VersionManager:
 
     def get_versions(self, beta=False) -> List[str]:
         data = self._fetch_data()
-        if not data:
-            return ["7.11", "7.10", "7.01", "7.00", "6.24"]
         if "releases" in data:
             releases_key = "beta" if beta else "stable"
             releases = data["releases"].get(releases_key, [])
             versions = [self._extract_version_number(release) for release in releases]
             return versions
         key = "betas" if beta else "versions"
-        return data.get(key, [])
+        versions = data.get(key, [])
+        if not versions:
+            raise RuntimeError("No version data available in config.")
+        return versions
 
     def get_languages(self) -> List[str]:
         data = self._fetch_data()
-        if not data:
-            return ["English"]
         if "localization" in data:
             languages = data["localization"].get("supported_languages", [])
             return [lang["name"] for lang in languages]
-        return data.get("languages", [])
+        languages = data.get("languages", [])
+        if not languages:
+            raise RuntimeError("No language data available in config.")
+        return languages
 
     def get_lang_dict(self) -> Dict[str, str]:
         data = self._fetch_data()
-        if not data:
-            return {"English": ""}
         if "localization" in data:
             languages = data["localization"].get("supported_languages", [])
             return {lang["name"]: lang["code"] for lang in languages}
-        return data.get("lang_dict", {})
+        lang_dict = data.get("lang_dict", {})
+        if not lang_dict:
+            raise RuntimeError("No language dictionary available in config.")
+        return lang_dict
 
     def get_lastmod(self) -> str:
         data = self._fetch_data()
-        if not data:
-            return "Unknown"
         if "metadata" in data:
             return data["metadata"].get("last_updated", "Unknown")
-        return data.get("datemodified", "Unknown")
+        lastmod = data.get("datemodified", None)
+        if lastmod is None:
+            raise RuntimeError("No last modified date available in config.")
+        return lastmod
 
     def get_download_config(self) -> Dict:
         data = self._fetch_data()
-        if not data:
-            return {
-                "base_url": "https://www.rarlab.com/rar/",
-                "filename_pattern": "winrar-x64-{version}{lang_code}.exe",
-                "activation_key_url": "https://fs.xserv.pp.ua/files/rarreg.key",
-            }
-        return data.get("download_config", {})
+        config = data.get("download_config", {})
+        if not config:
+            raise RuntimeError("No download config available in config.")
+        return config
 
     def get_supported_languages_since_version(self, min_version: str) -> List[str]:
         data = self._fetch_data()
-        if not data or "localization" not in data:
-            return self.get_languages()
+        if "localization" not in data:
+            raise RuntimeError("No localization data available in config.")
         languages = data["localization"].get("supported_languages", [])
         return [
             lang["name"]

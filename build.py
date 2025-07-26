@@ -5,16 +5,22 @@ import sys
 
 version_sliced = APP_VERSION.split(".")
 # Build Configuration
-VERSION = (int(version_sliced[0]), int(version_sliced[1]), int(version_sliced[2]), int(version_sliced[3]))
+VERSION = (
+    int(version_sliced[0]),
+    int(version_sliced[1]),
+    int(version_sliced[2]),
+    int(version_sliced[3]),
+)
 VERSION_STR = ".".join(map(str, VERSION))
 COMPANY_NAME = "xxanqw"
 PRODUCT_NAME = "WinRar Installer"
 FILE_DESCRIPTION = "WinRar Installer dammit"
-COPYRIGHT = "2024 xxanqw"
+COPYRIGHT = "©2025 xxanqw"
+
 
 def create_version_file():
     """Create a version_info.py file for PyInstaller"""
-    version_info = f'''# UTF-8
+    version_info = f"""# UTF-8
 #
 # For more details about fixed file info 'ffi' see:
 # http://msdn.microsoft.com/en-us/library/ms646997.aspx
@@ -50,17 +56,18 @@ VSVersionInfo(
         StringStruct(u'ProductName', u'{PRODUCT_NAME}'),
         StringStruct(u'ProductVersion', u'{VERSION_STR}'),
         StringStruct(u'LegalCopyright', u'{COPYRIGHT}')])
-      ]), 
+      ]),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
-)'''
-    with open("version_info.txt", "w") as f:
+)"""
+    with open("version_info.txt", "w", encoding="utf-8") as f:
         f.write(version_info)
     return "version_info.txt"
 
+
 def create_admin_manifest():
     """Create manifest file for admin privileges"""
-    manifest = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    manifest = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
@@ -69,10 +76,11 @@ def create_admin_manifest():
       </requestedPrivileges>
     </security>
   </trustInfo>
-</assembly>'''
+</assembly>"""
     with open("admin.manifest", "w") as f:
         f.write(manifest)
     return "admin.manifest"
+
 
 def sign_exe(exe_path, pfx_path, password):
     """Sign the executable using a PFX certificate"""
@@ -86,61 +94,62 @@ def sign_exe(exe_path, pfx_path, password):
         return False
     return True
 
+
 def build_with_pyinstaller(console=False, sign=False):
     """Build the application using PyInstaller"""
     version_file = create_version_file()
     manifest_file = create_admin_manifest()
-    
+
     # Build GUI version (no console) using app_gui.py
     gui_cmd = (
-        f'pyinstaller --onefile --noconsole '
-        f'--icon=windows/rarcat.png '
+        f"pyinstaller --onefile --noconsole "
+        f"--icon=windows/rarcat.png "
         f'--add-data "windows/rarcat.png;windows" '
         f'--add-data "windows/rarcat-100x100.png;windows" '
-        f'--version-file={version_file} '
-        f'--manifest={manifest_file} '
-        f'--uac-admin '
-        f'--name winrar-installer '
-        f'app_gui.py'
+        f"--version-file={version_file} "
+        f"--manifest={manifest_file} "
+        f"--uac-admin "
+        f"--name winrar-installer "
+        f"app_gui.py"
     )
-    
+
     # Build CLI version (with console) using app_cli.py
     cli_cmd = (
-        f'pyinstaller --onefile --console '
-        f'--icon=windows/rarcat.png '
+        f"pyinstaller --onefile --console "
+        f"--icon=windows/rarcat.png "
         f'--add-data "windows/rarcat.png;windows" '
         f'--add-data "windows/rarcat-100x100.png;windows" '
-        f'--version-file={version_file} '
-        f'--manifest={manifest_file} '
-        f'--uac-admin '
-        f'--name winrar-installer-cli '
-        f'app_cli.py'
+        f"--version-file={version_file} "
+        f"--manifest={manifest_file} "
+        f"--uac-admin "
+        f"--name winrar-installer-cli "
+        f"app_cli.py"
     )
-    
+
     print("Building GUI version (no console)...")
     os.system(gui_cmd)
-    
+
     print("Building CLI version (with console)...")
     os.system(cli_cmd)
-    
+
     if sign:
-        gui_exe = os.path.join('dist', 'winrar-installer.exe')
-        cli_exe = os.path.join('dist', 'winrar-installer-cli.exe')
-        pfx_path = 'certificate.pfx'
-        password = ''
-        
+        gui_exe = os.path.join("dist", "winrar-installer.exe")
+        cli_exe = os.path.join("dist", "winrar-installer-cli.exe")
+        pfx_path = "certificate.pfx"
+        password = ""
+
         print("Signing GUI executable...")
         if sign_exe(gui_exe, pfx_path, password):
             print("GUI executable signed successfully.")
         else:
             print("Failed to sign GUI executable.")
-            
+
         print("Signing CLI executable...")
         if sign_exe(cli_exe, pfx_path, password):
             print("CLI executable signed successfully.")
         else:
             print("Failed to sign CLI executable.")
-    
+
     print("\nBuild completed!")
     print("Generated files:")
     print("  - winrar-installer.exe (GUI version, no console)")
@@ -149,11 +158,14 @@ def build_with_pyinstaller(console=False, sign=False):
     print("  - GUI: winrar-installer.exe")
     print("  - CLI: winrar-installer-cli.exe --install --version 7.11")
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Build WinRAR Installer')
-    parser.add_argument('-p', '--pyinstaller', action='store_true', help='Build with PyInstaller')
-    parser.add_argument('-c', '--console', action='store_true', help='Enable console')
-    parser.add_argument('-s', '--sign', action='store_true', help='Sign the executable')
+    parser = argparse.ArgumentParser(description="Build WinRAR Installer")
+    parser.add_argument(
+        "-p", "--pyinstaller", action="store_true", help="Build with PyInstaller"
+    )
+    parser.add_argument("-c", "--console", action="store_true", help="Enable console")
+    parser.add_argument("-s", "--sign", action="store_true", help="Sign the executable")
     args = parser.parse_args()
 
     if not any(vars(args).values()):
@@ -161,7 +173,9 @@ def main():
         sys.exit(1)
 
     if args.pyinstaller:
-        print(f"Building with PyInstaller ({'with' if args.console else 'no'} console{' and signing' if args.sign else ''})")
+        print(
+            f"Building with PyInstaller ({'with' if args.console else 'no'} console{' and signing' if args.sign else ''})"
+        )
         build_with_pyinstaller(console=args.console, sign=args.sign)
         cleanup(console=args.console)
     else:
@@ -169,15 +183,16 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+
 def cleanup(console=False):
     """Clean up temporary build files"""
     files_to_remove = [
         "version_info.txt",
         "admin.manifest",
         "winrar-installer.spec",
-        "winrar-installer-cli.spec"
+        "winrar-installer-cli.spec",
     ]
-    
+
     for file in files_to_remove:
         try:
             if os.path.exists(file):
@@ -185,6 +200,7 @@ def cleanup(console=False):
                 print(f"Removed {file}")
         except Exception as e:
             print(f"Could not remove {file}: {e}")
+
 
 if __name__ == "__main__":
     main()

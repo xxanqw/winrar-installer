@@ -6,8 +6,8 @@ import platform
 import os.path as p
 import sys
 
-# from elevate import elevate
-# elevate()
+from elevate import elevate
+elevate()
 
 
 def run_gui():

@@ -36,14 +36,14 @@ class Downloader(QThread):
                 print("| Download completed!")
             else:
                 error_msg = f"Failed to download file. HTTP {response.status_code}"
-                print(f"| {error_msg}")
                 self.error_occurred.emit(error_msg)
+                raise Exception(error_msg)
 
         except requests.RequestException as e:
             error_msg = f"Network error: {str(e)}"
-            print(f"| {error_msg}")
             self.error_occurred.emit(error_msg)
+            raise
         except Exception as e:
             error_msg = f"Download error: {str(e)}"
-            print(f"| {error_msg}")
             self.error_occurred.emit(error_msg)
+            raise

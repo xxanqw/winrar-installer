@@ -1,3 +1,4 @@
+import sys
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -7,16 +8,13 @@ from PySide6.QtWidgets import (
     QComboBox,
     QPushButton,
     QCheckBox,
-    QProgressBar,
     QMessageBox,
     QFrame,
     QGridLayout,
     QGroupBox,
-    QSpacerItem,
-    QSizePolicy,
 )
 from PySide6.QtGui import QPixmap, QAction, QFont
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt
 from logic import (
     Downloader,
     InstallerThread,
@@ -25,7 +23,6 @@ from logic import (
     get_languages,
     get_lastmod,
     get_lang_dict,
-    check_file_availability,
 )
 from .about import AboutWindow
 from os import path as p, remove
@@ -37,77 +34,52 @@ from typing import Literal
 window_location = p.dirname(p.abspath(__file__))
 
 
+def qt_exception_hook(exctype, value, traceback):
+    from PySide6.QtWidgets import QApplication, QMessageBox
+
+    app = QApplication.instance()
+    if app is not None:
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setWindowTitle("Application Error")
+        msg.setText(f"{exctype.__name__}: {value}")
+        msg.setDetailedText(
+            "".join(__import__("traceback").format_exception(exctype, value, traceback))
+        )
+        msg.exec()
+    else:
+        print(f"{exctype.__name__}: {value}")
+        import traceback as tb
+
+        tb.print_exception(exctype, value, traceback)
+
+
+sys.excepthook = qt_exception_hook
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setFixedSize(420, 380)
+        self.setFixedSize(420, 340)
         self.setWindowTitle("WinRAR Installer")
         try:
             self.lang_dict = get_lang_dict()
         except Exception as e:
-            print(f"Error loading language dictionary: {e}")
-            self.lang_dict = {
-                "English": "",
-                "Russian": "ru",
-                "German": "d",
-                "French": "fr",
-                "Chinese Traditional": "tc",
-                "Chinese Simplified": "sc",
-            }
+            raise RuntimeError("Failed to load language dictionary. Cannot continue.")
+
+        import requests
+
         self.config = None
         try:
-            import requests
-            import json
-
-            try:
-                response = requests.get(
-                    "https://fs.xserv.pp.ua/winrar/config.json", timeout=10
-                )
-                if response.status_code == 200:
-                    self.config = response.json()
-                    print("Loaded configuration from remote URL")
-                else:
-                    print(f"Failed to load remote config: HTTP {response.status_code}")
-            except requests.RequestException as e:
-                print(f"Failed to load remote config: {e}")
-            if self.config is None:
-                try:
-                    try:
-                        with open("winrar.json", "r") as f:
-                            self.config = json.load(f)
-                        print("Loaded configuration from local file")
-                    except UnicodeDecodeError:
-                        with open("winrar.json", "r", encoding="utf-8") as f:
-                            self.config = json.load(f)
-                        print("Loaded configuration from local file with UTF-8")
-                except FileNotFoundError:
-                    print(
-                        "winrar.json not found locally - using fallback configuration"
-                    )
-                    self.config = None
-                except Exception as e:
-                    print(f"Error loading local winrar.json: {e}")
-                    self.config = None
-        except Exception as e:
-            print(f"Error loading configuration: {e}")
-            self.config = None
+            response = requests.get(
+                "https://fs.xserv.pp.ua/winrar/config.json", timeout=10
+            )
+            if response.status_code == 200:
+                self.config = response.json()
+        except requests.RequestException as e:
+            self.message("Error", f"Failed to load remote configuration: {e}", "error")
         if self.config is None:
-            print("Using minimal fallback configuration")
-            self.config = {
-                "releases": {
-                    "stable": [
-                        {"version": "7.11", "availability": {"English": True}},
-                        {"version": "7.10", "availability": {"English": True}},
-                        {"version": "7.01", "availability": {"English": True}},
-                        {"version": "7.00", "availability": {"English": True}},
-                        {"version": "6.24", "availability": {"English": True}},
-                    ],
-                    "beta": [
-                        {"version": "7.12b1", "availability": {"English": True}},
-                        {"version": "7.11b1", "availability": {"English": True}},
-                    ],
-                }
-            }
+            raise RuntimeError("Failed to load remote configuration. Cannot continue.")
         self.setup_toolbar()
         self.beta = False
         self.lastmod = get_lastmod()
@@ -281,21 +253,15 @@ class MainWindow(QMainWindow):
         self.language = self.langdropdown.currentText()
         self.ver = version.replace(".", "")
         if not hasattr(self, "lang_dict") or self.lang_dict is None:
-            print("Warning: lang_dict not available, using empty language code")
             self.lang = ""
         else:
             self.lang = self.lang_dict[self.language]
         try:
             if self.beta:
-                print("| Using beta link. (rarlab.com)")
                 url = f"https://www.rarlab.com/rar/winrar-x64-{self.ver}{self.lang}.exe"
             else:
-                print("| (rarlab.com)")
                 url = f"https://www.rarlab.com/rar/winrar-x64-{self.ver}{self.lang}.exe"
             self.downpath = f"{self.temp}\\winrar-x64-{self.ver}{self.lang}.exe"
-            print(f"| Downloading WinRAR {version} ({self.language})")
-            print(f"| URL: {url}")
-            print(f"| Temp: {self.temp}")
             self.downloader = Downloader(url, self.downpath)
             self.downloader.error_occurred.connect(self.handle_download_error)
             self.downloader.finished.connect(self.install_part_two)
@@ -348,9 +314,10 @@ class MainWindow(QMainWindow):
                 if p.exists(key_path_winrar):
                     remove(key_path_winrar)
                 shutil.move(key_path, winrar_install_path)
-                print(f"| rarreg.key moved to {winrar_install_path} successfully.")
             else:
-                print("| WinRAR installation folder not found.")
+                raise FileNotFoundError(
+                    "WinRAR installation path does not exist. Try reinstalling WinRAR."
+                )
         except Exception as e:
             self.message("Error", f"An error occurred: {e}", "error")
             self.reenable()
@@ -422,16 +389,7 @@ class MainWindow(QMainWindow):
 
     def get_beta_available_languages(self) -> list:
         if not self.config or "releases" not in self.config:
-            return [
-                "English",
-                "Russian",
-                "Chinese Traditional",
-                "German",
-                "Indonesian",
-                "Portuguese",
-                "Portuguese Brazilian",
-                "Swedish",
-            ]
+            raise RuntimeError("Beta languages unavailable: config not loaded.")
         available_languages = set()
         for release in self.config["releases"]["beta"]:
             if release.get("supported", False):
@@ -460,7 +418,6 @@ class MainWindow(QMainWindow):
         self.launch_checkbox.setDisabled(False)
         self.show_betas_checkbox.setDisabled(False)
         self.install_button.setText("Install WinRAR")
-        print("| Installation completed!")
         self.message(
             "Installation completed", "WinRAR has been installed successfully.", "info"
         )
