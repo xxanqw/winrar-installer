@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://cdn.xserv.pp.ua/images/github/winrar-installer/winrar.png" alt="Extra simple WinRar Installer"/>
+    <img src="https://cdn.xserv.pp.ua/files/images/github/winrar-installer/winrar.png" alt="Extra simple WinRar Installer"/>
 </p>
 
 <h1 align="center">Simple WinRAR Installer</h1>
