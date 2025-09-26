@@ -1,9 +1,10 @@
-<p align="center">
-    <img src="https://cdn.xserv.pp.ua/files/images/github/winrar-installer/winrar.png" alt="Extra simple WinRar Installer"/>
-</p>
+<div align="center">
 
-<h1 align="center">Simple WinRAR Installer</h1>
+<img src="https://cdn.xserv.pp.ua/files/images/github/winrar-installer/winrar.png" alt="Extra simple WinRar Installer"/>
 
+# Simple WinRAR Installer
+p.s. there also a legacy [winrar-installer-legacy](https://github.com/xxanqw/winrar-installer-legacy)
+</div>
 
 ## 🚀 Installation
 
