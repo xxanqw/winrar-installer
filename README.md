@@ -14,7 +14,7 @@ p.s. there also a legacy [winrar-installer-legacy](https://github.com/xxanqw/win
 Run this command in your PowerShell terminal:
 
 ```powershell
-irm https://shorty.pp.ua/winrar | iex
+irm https://s.co.ua/winrar | iex
 ```
 
 #### CLI Mode with Parameters
@@ -22,22 +22,22 @@ For automated installations and advanced usage:
 
 ```powershell
 # Install latest English version
-iex "& {$(irm https://shorty.pp.ua/winrar)} -Install"
+iex "& {$(irm https://s.co.ua/winrar)} -Install"
 
 # Install specific version and language
-iex "& {$(irm https://shorty.pp.ua/winrar)} -Install -Version '7.11' -Language 'Ukrainian'"
+iex "& {$(irm https://s.co.ua/winrar)} -Install -Version '7.11' -Language 'Ukrainian'"
 
 # Install beta version without launching
-iex "& {$(irm https://shorty.pp.ua/winrar)} -Install -Beta -NoLaunch"
+iex "& {$(irm https://s.co.ua/winrar)} -Install -Beta -NoLaunch"
 
 # List available versions
-iex "& {$(irm https://shorty.pp.ua/winrar)} -ListVersions"
+iex "& {$(irm https://s.co.ua/winrar)} -ListVersions"
 
 # List available languages
-iex "& {$(irm https://shorty.pp.ua/winrar)} -ListLanguages"
+iex "& {$(irm https://s.co.ua/winrar)} -ListLanguages"
 
 # Show help
-iex "& {$(irm https://shorty.pp.ua/winrar)} -Help"
+iex "& {$(irm https://s.co.ua/winrar)} -Help"
 ```
 
 #### PowerShell Parameters
